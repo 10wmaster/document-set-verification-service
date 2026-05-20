@@ -1,4 +1,6 @@
+database.db
+uploads/
+__pycache__/
 .venv/
 .idea/
-__pycache__/
-*.docx
+.env

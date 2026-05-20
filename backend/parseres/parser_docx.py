@@ -24,6 +24,14 @@ def parser_docx(file_path):
                 **para_data
             }
             result.append(chunk)
+            # Внутри parser_docx(file_path) перед return result:
+        if len(doc.inline_shapes) > 0:
+            result.append({
+            "text": "[графическая_подпись_обнаружена]",
+            "font": "Times New Roman",
+            "size": 12.0
+        })
+
     return result
 
 def check_document_online(file_path, gost_name):

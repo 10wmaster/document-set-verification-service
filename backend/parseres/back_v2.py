@@ -101,6 +101,23 @@ def validate_order_772n(chunks: List[DocumentChunk]) -> List[ValidationErrorItem
 def validate_journal_post_2464(chunks: List[DocumentChunk]) -> List[ValidationErrorItem]:
     errors = []
     full_text = " ".join([c.text.lower() for c in chunks])
+    
+    required_fields = ["фио", "дата", "подпись"]
+    for field in required_fields:
+        if field not in full_text:
+            errors.append(ValidationErrorItem(
+                category="Реквизиты документа",
+                severity=SeverityLevel.CRITICAL,
+                message=f"В форме фиксации инструктажа не найден обязательный столбец/поле: '{field.upper()}'"
+            ))
+
+    # ХАК ДЛЯ ПРОВЕРКИ ФИЗИЧЕСКОЙ ПОДПИСИ
+    if "подпись" in full_text and "[графическая_подпись_обнаружена]" not in full_text:
+        errors.append(ValidationErrorItem(
+            category="Реквизиты документа",
+            severity=SeverityLevel.CRITICAL,
+            message="Критическая ошибка: Столбец 'ПОДПИСЬ' найден, но сами физические подписи (графические элементы) в документе отсутствуют!"
+        ))
 
     # Проверка структуры полей (ГОСТ 12.0.004-2015 + Пост. 2464)
     required_fields = ["фио", "дата", "подпись"]
@@ -114,7 +131,7 @@ def validate_journal_post_2464(chunks: List[DocumentChunk]) -> List[ValidationEr
 
     # Контроль сроков просрочки инструктажей (раз в 180 дней по Пост. 2464)
     for chunk in chunks:
-        if len(chunk.text) == 10 and chunk.text.count(".") == 2:  # Шаблон даты ДД.ММ.ГГГГ
+        if (len(chunk.text) == 10 or len(chunk.text) == 8) and chunk.text.count(".") == 2:  # Шаблон даты ДД.ММ.ГГГГ
             try:
                 date_obj = datetime.strptime(chunk.text, "%d.%m.%Y")
                 if datetime.now() - date_obj > timedelta(days=180):
