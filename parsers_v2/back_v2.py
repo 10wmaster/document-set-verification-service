@@ -1,8 +1,9 @@
+import re
+import enum
+from datetime import datetime, timedelta
+from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import enum
 
 app = FastAPI(
     title="OHS Expert Compliance Service API",
@@ -78,6 +79,7 @@ def validate_journal_post_2464(chunks: List[DocumentChunk]) -> List[ValidationEr
     errors = []
     full_text = " ".join([c.text.lower() for c in chunks])
 
+    # Проверка обязательных полей/колонок
     required_fields = ["фио", "дата", "подпись"]
     for field in required_fields:
         if field not in full_text:
@@ -87,18 +89,25 @@ def validate_journal_post_2464(chunks: List[DocumentChunk]) -> List[ValidationEr
                 message=f"В форме фиксации инструктажа не найден обязательный столбец/поле: '{field.upper()}'"
             ))
 
+    # Регулярное выражение для поиска дат в формате ДД.ММ.ГГГГ внутри любого текста
+    date_pattern = r"\b\d{2}\.\d{2}\.\d{4}\b"
+
     for chunk in chunks:
-        if len(chunk.text) == 10 and chunk.text.count(".") == 2:  # Шаблон даты ДД.ММ.ГГГГ
+        match = re.search(date_pattern, chunk.text)
+        if match:
+            date_str = match.group(0)  # Извлекаем саму строку даты
             try:
-                date_obj = datetime.strptime(chunk.text, "%d.%m.%Y")
+                date_obj = datetime.strptime(date_str, "%d.%m.%Y")
+                # Контроль сроков просрочки (более 180 дней по Постановлению 2464)
                 if datetime.now() - date_obj > timedelta(days=180):
                     errors.append(ValidationErrorItem(
                         category="Сроки действия",
                         severity=SeverityLevel.CRITICAL,
-                        message=f"Выявлен факт нарушения периодичности обучения! Инструктаж от {chunk.text} просрочен (более 6 месяцев)."
+                        message=f"Выявлен факт нарушения периодичности обучения! Инструктаж от {date_str} просрочен (более 6 месяцев)."
                     ))
             except ValueError:
                 continue
+
     return errors
 
 # === 4. ЭНДПОИНТЫ API ===
