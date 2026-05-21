@@ -5,15 +5,6 @@ def parser_pdf(file_path):
     result = []
 
     for page in doc:
-    # ХАК: Если на странице есть картинки (сканы подписей/печатей), 
-    # добавляем искусственный чанк, что графика обнаружена
-        if len(page.get_images()) > 0:
-            result.append({
-                "text": "[графическая_подпись_обнаружена]",
-                "font": "System",
-                "size": 12.0,
-                "page": page.number + 1
-            })
         blocks = page.get_text("dict")["blocks"]
 
         for b in blocks:

@@ -24,35 +24,27 @@ def parser_docx(file_path):
                 **para_data
             }
             result.append(chunk)
-            # Внутри parser_docx(file_path) перед return result:
-        if len(doc.inline_shapes) > 0:
-            result.append({
-            "text": "[графическая_подпись_обнаружена]",
-            "font": "Times New Roman",
-            "size": 12.0
-        })
-
     return result
 
-def check_document_online(file_path, gost_name):
-    print(f"Парсинг файла {file_path}...")
-    data = parser_docx(file_path)
-    payload = {
-        "gost_name": gost_name,
-        "document_data": data
-    }
-    url = "http://127.0.0.1:8001/check"
-    try:
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            print("\n--- РЕЗУЛЬТАТ ПРОВЕРКИ ---")
-            pprint(response.json())
-        else:
-            print(f"Ошибка сервера: {response.status_code}")
-            print(response.text)
-    except requests.exceptions.ConnectionError:
-        print("ОШИБКА: Сервер не запущен! Сначала запусти uvicorn в другом терминале.")
+# def check_document_online(file_path, gost_name):
+#     print(f"Парсинг файла {file_path}...")
+#     data = parser_docx(file_path)
+#     payload = {
+#         "gost_name": gost_name,
+#         "document_data": data
+#     }
+#     url = "http://127.0.0.1:8001/check"
+#     try:
+#         response = requests.post(url, json=payload)
+#         if response.status_code == 200:
+#             print("\n--- РЕЗУЛЬТАТ ПРОВЕРКИ ---")
+#             pprint(response.json())
+#         else:
+#             print(f"Ошибка сервера: {response.status_code}")
+#             print(response.text)
+#     except requests.exceptions.ConnectionError:
+#         print("ОШИБКА: Сервер не запущен! Сначала запусти uvicorn в другом терминале.")
 
-if __name__ == "__main__":
-    file_to_check = "../test.docx"
-    check_document_online(file_to_check, "ГОСТ_7.32")
+# if __name__ == "__main__":
+#     file_to_check = "../test.docx"
+#     check_document_online(file_to_check, "ГОСТ_7.32")

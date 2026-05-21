@@ -35,7 +35,7 @@ class ValidationRequest(BaseModel):
 
 # === 3. БИЗНЕС-ЛОГИКА (Функции валидации) ===
 
-# А. Нормоконтроль оформления (ГОСТ Р 7.0.97-2016)
+# А. Нормоконтроль оформления  (ГОСТ Р 7.0.97-2016)
 def validate_gost_7_0_97(chunks: List[DocumentChunk]) -> List[ValidationErrorItem]:
     errors = []
     for idx, chunk in enumerate(chunks):
