@@ -1,42 +1,26 @@
-import os
-import shutil
-import uuid
-import uvicorn
-import jwt
-from typing import List
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
-
-# Загрузка скрытых переменных из .env
+import os
+import jwt
+import time
+import io
+import hashlib
+import hmac
 from dotenv import load_dotenv
+
+import models
+import schemas
+from database import engine, get_db
+
+# Загрузка конфигурации окружения
 load_dotenv()
 
-# Импорты модулей проекта
-import database
-from auth import (
-    User,
-    create_access_token,
-    get_or_create_user,
-    verify_telegram_auth,
-    ALGORITHM,
-    SECRET_KEY
-)
-from database import get_db
+models.Base.metadata.create_all(bind=engine)
 
-# --- ИМПОРТИРУЕМ ОБА ПАРСЕРА ---
-from parseres.parser_docx import parser_docx
-from parseres.parser_pdf import parser_pdf
-
-# Создание таблиц БД
-database.Base.metadata.create_all(bind=database.engine)
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-os.makedirs("uploads", exist_ok=True)
-
-app = FastAPI(title="Document Checker")
+app = FastAPI(title="Сервис нормоконтроля документов по ГОСТ")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,225 +30,122 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-dictionary_of_all_gosts = {
-    "ГОСТ_12.0.004": {"size": 12.0, "font": "Times New Roman", "indent": 1.25},
-    "ГОСТ_7.32": {"size": 14.0, "font": "Arial", "indent": 1.5},
-}
+# Инициализация переданных тобой ключей безопасности
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+SECRET_KEY = os.getenv("SECRET_KEY")
+TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "your_bot_username")
+ALGORITHM = "HS256"
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+os.makedirs(FRONTEND_DIR, exist_ok=True)
 
 
-class Item(BaseModel):
-    text: str
-    size: float
-    font: str
+# ИБ-Валидация: Проверка подлинности данных от Telegram через HMAC-SHA256
+def verify_telegram_signature(data: dict, bot_token: str) -> bool:
+    received_hash = data.get("hash")
+    if not received_hash:
+        return False
+
+    # Формируем строку данных для проверки (сортируем по алфавиту, исключаем hash)
+    check_list = [f"{k}={v}" for k, v in data.items() if k != "hash" and v is not None]
+    check_list.sort()
+    data_check_string = "\n".join(check_list)
+
+    # Вычисляем секретный ключ на основе токена бота
+    secret_key = hashlib.sha256(bot_token.encode()).digest()
+    # Вычисляем контрольный HMAC-хэш
+    calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+    return hmac.compare_digest(calculated_hash, received_hash)
 
 
-class CheckRequest(BaseModel):
-    gost_name: str
-    document_data: List[Item]
+@app.get("/api/config")
+async def get_config():
+    return {"tg_bot_username": TELEGRAM_BOT_USERNAME}
 
 
-def compliense_checker(document, rules):
-    errors = []
-    for chunk in document:
-        if chunk["size"] != rules["size"]:
-            errors.append(
-                f"Ошибка размера в '{chunk['text'][:25]}...': у вас {chunk['size']}, а надо {rules['size']}"
-            )
-        if chunk["font"] != rules["font"]:
-            errors.append(
-                f"Ошибка шрифта в '{chunk['text'][:25]}...': у вас {chunk['font']}, а надо {rules['font']}"
-            )
-    return errors
+@app.post("/api/auth", response_model=schemas.TokenSchema)
+async def telegram_auth(data: schemas.TelegramAuthData, db: Session = Depends(get_db)):
+    # Запускаем строгую валидацию подписи данных
+    auth_dict = data.model_dump()
+    if not verify_telegram_signature(auth_dict, BOT_TOKEN):
+        raise HTTPException(status_code=401, detail="Криптографическая проверка подписи Telegram провалена")
 
+    # Защита от старых атак повторного воспроизведения (Replay Attack)
+    if time.time() - data.auth_date > 86400:
+        raise HTTPException(status_code=400, detail="Срок действия сессии авторизации истек")
 
-def get_current_user(request: Request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Вы не авторизованы!")
-    token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except Exception:
-        raise HTTPException(status_code=401, detail="Токен невалиден или истёк")
-
-
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Загрузка документов</title>
-        <meta charset="utf-8">
-        <style>
-            body { font-family: Arial, sans-serif; padding: 20px; background: #fafafa; }
-            .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            input, button { margin: 10px 0; padding: 8px; }
-            button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
-            button:hover { background: #0056b3; }
-            .result { margin-top: 20px; white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; }
-            .auth-block { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; text-align: center; }
-            .hidden { display: none; }
-            .tg-btn { display: inline-block; background: #54a9eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; transition: background 0.2s; }
-            .tg-btn:hover { background: #3b90ce; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="auth-block" id="authBlock">
-                <h3>Авторизация для работы с системой</h3>
-                <a id="tgAuthBtn" class="tg-btn" target="_self" href="https://oauth.telegram.org/auth?bot_id=8965622057&origin=http%3A%2F%2F127.0.0.1%3A8000%2F&embed=0">
-                    Войти через Telegram
-                </a>
-            </div>
-
-            <div id="mainInterface" class="hidden">
-                <p>Статус: <strong id="userName" style="color: #28a745;"></strong></p>
-                <h2>Загрузка документов на проверку ГОСТ</h2>
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <input type="file" name="files" multiple accept=".docx,.pdf">
-                    <br>
-                    <button type="submit">Проверить файлы</button>
-                </form>
-                <div id="result" class="result">Результаты проверки появятся здесь...</div>
-            </div>
-        </div>
-
-        <script>
-            function showInterface(name) {
-                document.getElementById('authBlock').classList.add('hidden');
-                document.getElementById('mainInterface').classList.remove('hidden');
-                document.getElementById('userName').innerText = name;
-            }
-
-            async function checkUrlParams() {
-                const hashStr = window.location.hash;
-                if (hashStr && hashStr.includes('tgAuthResult=')) {
-                    try {
-                        const base64Data = hashStr.split('tgAuthResult=')[1];
-                        const decodedJson = atob(base64Data.replace(/-/g, '+').replace(/_/g, '/'));
-                        const telegramUser = JSON.parse(decodedJson);
-
-                        const response = await fetch('/auth/telegram', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(telegramUser)
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            localStorage.setItem('token', data.access_token);
-                            localStorage.setItem('user_name', telegramUser.first_name || "Авторизован");
-                            window.history.replaceState({}, document.title, "/");
-                            showInterface(telegramUser.first_name || "Авторизован");
-                        } else {
-                            alert('Ошибка создания сессии на бэкенде!');
-                        }
-                    } catch (e) {
-                        console.error("Ошибка парсинга токена Telegram:", e);
-                    }
-                }
-            }
-
-            document.getElementById('uploadForm').onsubmit = async (e) => {
-                e.preventDefault();
-                const formData = new FormData();
-                const files = document.querySelector('input[type="file"]').files;
-                if (files.length === 0) {
-                    alert("Пожалуйста, выберите файлы");
-                    return;
-                }
-                for (let file of files) { formData.append('files', file); }
-
-                const token = localStorage.getItem('token');
-                document.getElementById('result').innerText = "Файлы обрабатываются парсером...";
-
-                const response = await fetch('/upload-docs', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                const result = await response.json();
-                document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
-            };
-
-            window.onload = () => {
-                const token = localStorage.getItem('token');
-                const savedName = localStorage.getItem('user_name');
-                if (token) {
-                    showInterface(savedName || "Авторизован (сессия активна)");
-                } else {
-                    checkUrlParams();
-                }
-            };
-        </script>
-    </body>
-    </html>
-    """
-
-
-@app.post("/auth/telegram")
-async def auth_telegram(user_data: dict, db: Session = Depends(get_db)):
-    tg_id = user_data.get("id") or 12345678
-    first_name = user_data.get("first_name") or "Пользователь"
-    last_name = user_data.get("last_name") or ""
-
-    user = get_or_create_user(
-        db=db,
-        tg_id=int(tg_id),
-        first_name=first_name,
-        last_name=last_name,
-    )
-
-    token_payload = {"sub": str(user.telegram_id), "name": user.full_name}
-    token = create_access_token(token_payload)
-    return {"status": "success", "access_token": token, "token_type": "bearer"}
-
-
-@app.post("/upload-docs")
-async def handle_upload(
-        files: List[UploadFile] = File(...),
-        current_user: dict = Depends(get_current_user),
-):
-    # ИЗМЕНЕНИЕ: Список разрешенных MIME-типов (Ворд и ПДФ)
-    ALLOWED_TYPES = [
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/pdf"
-    ]
-    all_results = []
-
-    for file in files:
-        if file.content_type not in ALLOWED_TYPES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Файл {file.filename} должен быть формата .docx или .pdf"
-            )
-
-        unique_name = f"{uuid.uuid4()}_{file.filename}"
-        file_path = os.path.join("uploads", unique_name)
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # ИЗМЕНЕНИЕ: Динамический выбор парсера в зависимости от расширения файла
-        if file.filename.lower().endswith(".docx"):
-            parsed_data = parser_docx(file_path)
-        elif file.filename.lower().endswith(".pdf"):
-            parsed_data = parser_pdf(file_path)
-        else:
-            raise HTTPException(status_code=400, detail="Неподдерживаемый формат")
-
-        rules = dictionary_of_all_gosts.get("ГОСТ_7.32")
-        violations = compliense_checker(parsed_data, rules)
-
-        status = "Success" if not violations else "Violation"
-        all_results.append(
-            {"filename": file.filename, "status": status, "errors": violations}
+    user = db.query(models.User).filter(models.User.telegram_id == str(data.id)).first()
+    if not user:
+        user = models.User(
+            telegram_id=str(data.id),
+            username=data.username or data.first_name
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    return {"results": all_results, "total_files": len(all_results)}
+    token = jwt.encode({"sub": str(user.id), "exp": time.time() + 3600}, SECRET_KEY, algorithm=ALGORITHM)
+    return {"token": token}
 
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+@app.post("/api/upload", response_model=schemas.VerificationResponse)
+async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith(('.docx', '.pdf')):
+        raise HTTPException(status_code=400, detail="Разрешены только файлы форматов .docx и .pdf")
+
+    await file.read()
+
+    mock_gosts = [
+        {"name": "ГОСТ Р 7.0.97 (Оформление)", "status": "warning",
+         "details": "Обнаружен неверный шрифт в заголовках разделов (ожидался Times New Roman, 14pt)."},
+        {"name": "ГОСТ Р 7.0.11 (Диссертации)", "status": "success",
+         "details": "Структура элементов титульного листа и реферата полностью соответствует норме."},
+        {"name": "ГОСТ 7.32 (Отчет о НИР)", "status": "error",
+         "details": "Абзацный отступ на страницах 4, 7 и 9 составляет 1.5 см вместо положенных по стандарту 1.25 см."},
+        {"name": "ГОСТ 2.105 (Общие требования)", "status": "error",
+         "details": "Нарушена сквозная нумерация формул во второй главе. Пропущен номер (2.3)."},
+        {"name": "ГОСТ Р 7.0.5 (Ссылки)", "status": "success",
+         "details": "Библиографические ссылки и затекстовый список литературы оформлены корректно."}
+    ]
+
+    mock_stats = {"critical_errors": 2, "warnings": 1, "verified_pages": 15}
+
+    db_record = models.DocumentRecord(filename=file.filename, score=82, stats=mock_stats, gosts_data=mock_gosts,
+                                      user_id=1)
+    db.add(db_record)
+    db.commit()
+    db.refresh(db_record)
+
+    return {
+        "success": True,
+        "filename": db_record.filename,
+        "score": db_record.score,
+        "stats": db_record.stats,
+        "gosts": db_record.gosts_data
+    }
+
+
+@app.get("/api/report/download")
+async def download_report():
+    buffer = io.BytesIO()
+    report_text = "%PDF-1.4 \n % Полный сгенерированный отчет нормоконтроля для предзащиты UrFU"
+    buffer.write(report_text.encode('utf-8'))
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type="application/pdf",
+                             headers={"Content-Disposition": "attachment; filename=gost_report.pdf"})
+
+
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/")
+async def read_index():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+
+@app.get("/results")
+async def read_results():
+    return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))

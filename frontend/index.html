@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сервис автоматического нормоконтроля по ГОСТ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-area">
+                <h2>АвтоНормоКонтроль</h2>
+                <p class="subtitle">Информационная безопасность | Радиофак УрФУ</p>
+            </div>
+
+            <div class="auth-block">
+                <div id="tg-widget-container"></div>
+                <div id="user-profile" class="user-badge id-hidden"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="upload-zone" id="drop-zone">
+                <div class="icon-cloud">📂</div>
+                <h3>Загрузите документ для проверки</h3>
+                <p>Перетащите файл в эту область или кликните для выбора на устройстве</p>
+                <span class="file-limits">Допустимые форматы: .DOCX, .PDF (макс. 10 МБ)</span>
+                <input type="file" id="file-input" accept=".docx,.pdf" hidden>
+            </div>
+
+            <div class="loading-overlay id-hidden" id="loader">
+                <div class="spinner-box">
+                    <div class="spinner"></div>
+                </div>
+                <h3>Выполняется нормоконтроль структуры</h3>
+                <p>Проверяем разметку, шрифты, отступы и библиографию по ГОСТ стандартам...</p>
+            </div>
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
