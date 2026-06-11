@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Академический сервис — Просмотр результатов</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="document.css">
+</head>
+<body>
+    <div class="container">
+        <a href="upload.html" style="color: var(--color-primary); text-decoration: none;">← Назад к загрузке</a>
+
+        <div class="top-info-row">
+            <section class="document-section">
+                <h2 style="margin-bottom:16px;">Результаты экспресс-аудита ЛНА</h2>
+                <div class="status-summary">
+                    <div class="status-summary__item">
+                        <span class="status-summary__count status-summary__count--error" id="criticalCount">0</span>
+                        <span style="font-size:13px; color:var(--color-text-secondary);">Ошибок</span>
+                    </div>
+                    <div class="status-summary__item">
+                        <span class="status-summary__count status-summary__count--success" id="passedCount">0</span>
+                        <span style="font-size:13px; color:var(--color-text-secondary);">Успешно</span>
+                    </div>
+                    <div class="status-summary__item">
+                        <span class="status-summary__count" style="color:var(--color-primary);" id="percentCount">0%</span>
+                        <span style="font-size:13px; color:var(--color-text-secondary);">Соответствие</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <h2 style="margin-bottom:16px;">Параметры проверки разметки и реквизитов</h2>
+        <div id="checkColumns"></div>
+
+        <div style="margin-top:24px; display:flex; gap:16px;">
+            <button class="btn btn--primary" id="downloadBtn">Скачать отчет XLSX</button>
+        </div>
+    </div>
+    <script src="document.js"></script>
+</body>
+</html>
