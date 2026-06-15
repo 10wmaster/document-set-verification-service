@@ -32,6 +32,7 @@ class DocumentLine(BaseModel):
     page: int
 
 
+# Временное хранилище для MVP (демонстрации)
 audit_history = []
 
 
@@ -105,14 +106,28 @@ def extract_lines_from_file(file_name: str, file_bytes: bytes) -> List[DocumentL
 
 
 def analyze_document_text(doc_type: str, lines: List[DocumentLine]) -> Dict[str, Any]:
+    """Анализирует текст на соответствие ГОСТ и НПА"""
     errors = []
 
-    # Регулярные выражения для ГОСТ Р 7.0.97
-    fio_pattern = re.compile(r"([А-ЯЁ][а-ё]+(?:\s+[А-ЯЁ][а-ё]+){1,2})")
-    date_pattern = re.compile(r"\b(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(\d{4})\b")
+    # Собираем весь текст в одну строку в нижнем регистре для поиска разделов
+    text_all = " ".join([line.text for line in lines]).lower()
+
+    # Умные регулярки (ловят инициалы, капс и текстовые даты)
+    fio_pattern = re.compile(
+        r"(?:[А-ЯЁ][а-яё\-]+\s+[А-ЯЁ]\.\s*[А-ЯЁ]\.)|"
+        r"(?:[А-ЯЁ]{3,}\s+[А-ЯЁ]\.\s*[А-ЯЁ]\.)|"
+        r"(?:[А-ЯЁ][а-яё\-]+\s+[А-ЯЁ][а-яё\-]+(?:\s+[А-ЯЁ][а-яё\-]+)?)"
+    )
+    date_pattern = re.compile(
+        r"\b(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(\d{4})\b|"
+        r"\b\d{4}\s*(?:г\.|года?)\b|"
+        r"(?:0[1-9]|[12][0-9]|3[01])?\s*[а-яёА-ЯЁ]+\s*\d{4}"
+    )
 
     has_fio = False
     has_date = False
+    invalid_font_count = 0
+    total_lines = len(lines) if lines else 1
 
     for line in lines:
         if fio_pattern.search(line.text):
@@ -120,44 +135,62 @@ def analyze_document_text(doc_type: str, lines: List[DocumentLine]) -> Dict[str,
         if date_pattern.search(line.text):
             has_date = True
 
+        # Проверяем шрифты (допускаем Times New Roman и Arial)
+        font_name = line.font.lower().replace(" ", "")
+        if font_name and "times" not in font_name and "arial" not in font_name:
+            invalid_font_count += 1
+
     if doc_type == "instruction":
+        # 1. Проверка реквизитов
         if not has_fio:
-            errors.append({
-                "category": "Наличие ФИО",
-                "severity": "CRITICAL",
-                "message": "В документе не обнаружены ФИО ответственных лиц (разработчиков или утверждающих)",
-                "location": "Шапка / Реквизиты",
-                "fine_equivalent": "50 000 руб.",
-                "legal_tip": "Укажите ФИО и должности разработчиков ЛНА в соответствии со ст. 212 ТК РФ."
-            })
+            errors.append({"category": "Наличие ФИО", "severity": "CRITICAL",
+                           "message": "В документе не обнаружены ФИО ответственных лиц", "location": "Шапка",
+                           "fine_equivalent": "50 000 руб.", "legal_tip": "Укажите ФИО разработчиков."})
         if not has_date:
-            errors.append({
-                "category": "Дата документа",
-                "severity": "WARNING",
-                "message": "Не найдена дата утверждения локального акта",
-                "location": "Реквизиты",
-                "fine_equivalent": "0 руб.",
-                "legal_tip": "Рекомендуется проставить дату утверждения для фиксации точки отсчета его действия."
-            })
+            errors.append({"category": "Дата", "severity": "WARNING", "message": "Не найдена дата утверждения",
+                           "location": "Реквизиты", "fine_equivalent": "0 руб.",
+                           "legal_tip": "Рекомендуется проставить дату."})
+        if invalid_font_count > total_lines * 0.2:
+            errors.append({"category": "Шрифт", "severity": "WARNING",
+                           "message": "Более 20% текста использует нестандартный шрифт", "location": "Текст",
+                           "fine_equivalent": "0 руб.",
+                           "legal_tip": "Используйте Times New Roman 14pt (ГОСТ Р 7.0.97)."})
+
+        # 2. Проверка 5 обязательных разделов (Приказ 772н)
+        required_sections = [
+            ("общие требования", "Общие требования охраны труда"),
+            ("перед началом", "Требования перед началом работы"),
+            ("во время", "Требования во время работы"),
+            ("в аварийных", "Требования в аварийных ситуациях"),
+            ("по окончании", "Требования по окончании работы")
+        ]
+        for pattern, name in required_sections:
+            if pattern not in text_all:
+                errors.append({
+                    "category": "Структура (Приказ 772н)",
+                    "severity": "CRITICAL",
+                    "message": f"Отсутствует обязательный раздел: '{name}'",
+                    "location": "Тело документа",
+                    "fine_equivalent": "50 000 руб.",
+                    "legal_tip": "ТК РФ требует наличия данного раздела в инструкции."
+                })
+
     elif doc_type == "journal":
         if not has_fio:
-            errors.append({
-                "category": "Наличие ФИО",
-                "severity": "CRITICAL",
-                "message": "В журнале не обнаружены записи с ФИО инструктируемых лиц",
-                "location": "Табличная часть",
-                "fine_equivalent": "80 000 руб.",
-                "legal_tip": "Все обязательные графы журнала (ФИО, подписи) должны быть заполнены."
-            })
+            errors.append(
+                {"category": "Наличие ФИО", "severity": "CRITICAL", "message": "Не обнаружены ФИО инструктируемых лиц",
+                 "location": "Таблица", "fine_equivalent": "80 000 руб.",
+                 "legal_tip": "Заполните обязательные графы журнала."})
 
     critical_count = sum(1 for e in errors if e["severity"] == "CRITICAL")
     warning_count = sum(1 for e in errors if e["severity"] == "WARNING")
 
+    # Пересчет баллов
     base_score = 100
     if critical_count > 0:
-        base_score -= 40
+        base_score -= (20 * critical_count)  # -20% за каждую критическую
     if warning_count > 0:
-        base_score -= (10 * warning_count)
+        base_score -= (10 * warning_count)  # -10% за ворнинги
 
     compliance_percent = max(0, min(100, base_score))
 
@@ -182,11 +215,12 @@ async def verify_document(
         # 1. Извлекаем реальные строки из файла
         lines = extract_lines_from_file(file.filename, file_bytes)
 
-        # 2. Запускаем аудит по ГОСТам
+        # 2. Запускаем аудит по ГОСТам и НПА
         analysis = analyze_document_text(doc_type, lines)
 
-        # Вычисляем число успешных критериев
-        passed_count = max(0, 5 - analysis["total_errors"])
+        # Вычисляем число пройденных критериев (условно)
+        base_checks = 8 if doc_type == "instruction" else 3
+        passed_count = max(0, base_checks - analysis["total_errors"])
 
         # 3. Формируем универсальный ответ (совместимый и с Pydantic, и с JS фронтенда)
         response_data = {
@@ -214,7 +248,7 @@ async def verify_document(
             ]
         }
 
-        # Сохраняем в историю проверок для дашборда и выгрузки Excel
+        # Сохраняем в историю проверок для выгрузки Excel
         audit_history.append(response_data)
         return response_data
 
