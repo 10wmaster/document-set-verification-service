@@ -1,0 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0F172A;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    width: 100%;
+    max-width: 1240px;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.left {
+    flex: 1;
+    padding: 48px 60px 80px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.title-main {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1E2937;
+}
+
+.header-title {
+    color: #3B72E0;
+    font-weight: 600;
+}
+
+.step {
+    margin-top: 40px;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.step-circle {
+    width: 28px;
+    height: 28px;
+    background: #3B72E0;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.step-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1E2937;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    border: 2px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.card:hover,
+.card.active {
+    border-color: #3B72E0;
+    background: #F0F7FF;
+}
+
+.card-icon {
+    margin-bottom: 18px;
+}
+
+.card-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1E2937;
+    margin-bottom: 10px;
+}
+
+.card-desc {
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: #64748B;
+}
+
+/* Блок загрузки */
+.upload-area {
+    margin-top: 40px;
+    border: 2px dashed #94A3B8;
+    border-radius: 16px;
+    padding: 48px 40px;
+    background: #FAFBFF;
+}
+
+.upload-content {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.upload-icon {
+    flex-shrink: 0;
+}
+
+.upload-text-block {
+    flex: 1;
+}
+
+.upload-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1E2937;
+    margin-bottom: 6px;
+}
+
+.upload-subtitle {
+    color: #475569;
+    margin-bottom: 16px;
+}
+
+.info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #64748B;
+    margin-bottom: 28px;
+}
+
+.upload-btn {
+    background: #3B72E0;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.formats {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.format-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 14px;
+    color: #475569;
+}
+
+/* Кнопка "Начать проверку" */
+.start-check-btn {
+    width: 100%;
+    max-width: 687px;
+    height: 52px;
+    background: #3B72E0;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 28px;
+    box-shadow: 0 4px 20px rgba(59, 114, 224, 0.35);
+    transition: all 0.25s ease;
+}
+
+.start-check-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 114, 224, 0.45);
+}
+
+/* Правая панель */
+.right-panel {
+    width: 380px;
+    background: #F8FAFC;
+    padding: 48px 32px;
+    border-left: 1px solid #E2E8F0;
+}
+
+.right-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #334155;
+}
+
+.right-panel-list {
+    list-style: none;
+    color: #334155;
+    line-height: 1.8;
+    font-size: 15.2px;
+}
+
+.right-panel-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

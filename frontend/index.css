@@ -1,0 +1,184 @@
+/* Index page styles */
+
+body {
+    background: #1A2540;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.main {
+    display: flex;
+    max-width: 1280px;
+    width: 90%;
+    max-height: 740px;
+    height: auto;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0px 12px 45px 0px #FFFFFF0F;
+}
+
+.main_left {
+    width: 720px;
+    padding: 52px;
+    height: 740px;
+    box-sizing: border-box;
+    background: linear-gradient(154.1deg, #1E3A7A -8.2%, #2A5EC8 44.67%, #2A5FC8 65.24%, #3B8EE0 97.55%);
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.main_left-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.main_left-head img {
+    width: 57px;
+    height: 56px;
+}
+
+.main_left-head h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 15px;
+    letter-spacing: 3%;
+    margin: 0;
+    color: #FFFFFF;
+}
+
+.main_left-head p {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 12px;
+    letter-spacing: 0%;
+    margin: 0;
+    color: #FFFFFF;
+}
+
+.main_left-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.main_left-body h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 26px;
+    letter-spacing: 0%;
+    color: #FFFFFF;
+    margin: 0 0 16px 0;
+}
+
+.main_left-body p {
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 141%;
+    letter-spacing: 1%;
+    color: #D3E0F4;
+    margin: 0;
+}
+
+.main_left-footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main_left-footer li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #D3E0F4;
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.main_left-footer li img {
+    width: 13px;
+    height: 14px;
+}
+
+.main_right {
+    width: 560px;
+    padding: 44px 52px;
+    height: 740px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.main_right h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: 20px;
+    letter-spacing: 3%;
+    color: #1A2540;
+    margin: 0 0 12px 0;
+    text-align: center;
+}
+
+.main_right > p {
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 15px;
+    line-height: 141%;
+    letter-spacing: 1%;
+    text-align: center;
+    color: #5A6A8A;
+    margin: 0 0 32px 0;
+    width: 450px;
+}
+
+.authorization {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    width: 100%;
+}
+
+.authorization p {
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 13px;
+    line-height: 100%;
+    letter-spacing: 1%;
+    text-align: center;
+    color: #8792AA;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.authorization svg {
+    flex: 1;
+}
+
+.button_telegram {
+    width: 380px;
+}
+
+.button_telegram svg {
+    width: 100%;
+    height: auto;
+}

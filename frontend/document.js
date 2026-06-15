@@ -1,41 +1,67 @@
-// Переключаем константу на порт 9001, где запущен FastAPI
-const API_URL = 'http://127.0.0.1:9001';
-
 document.addEventListener('DOMContentLoaded', () => {
-    const data = JSON.parse(sessionStorage.getItem('check_result'));
-    if (!data) return;
+    // 1. Достаем результаты из памяти браузера
+    const rawData = sessionStorage.getItem('check_result');
+    const docType = sessionStorage.getItem('selected_doc_type');
 
-    // Заполняем счетчики
-    document.getElementById('criticalCount').textContent = data.critical_errors;
-    document.getElementById('passedCount').textContent = data.passed_count;
-    document.getElementById('percentCount').textContent = data.compliance_percent + '%';
+    if (!rawData) {
+        const container = document.getElementById('checkColumns');
+        if (container) {
+            container.innerHTML = `
+                <div style="background: #FEF2F2; padding: 20px; border-radius: 12px; border-left: 4px solid #EF4444; text-align: center;">
+                    <h3 style="color: #B91C1C; margin-top: 0; margin-bottom: 8px;">Нет данных для отображения</h3>
+                    <div style="color: #7F1D1D; font-size: 15px;">Система не нашла результатов проверки в памяти браузера.<br>Пожалуйста, вернитесь на страницу загрузки, выберите файл и дождитесь окончания анализа.</div>
+                </div>
+            `;
+        }
+        return;
+    }
 
+    const data = JSON.parse(rawData);
+
+    // 2. Заполняем карточку: Метаданные проверки
+    document.getElementById('docName').textContent = data.filename || 'Неизвестный файл';
+    document.getElementById('docType').textContent = docType === 'instruction' ? 'Инструкция по ОТ' : 'Журнал инструктажей';
+
+    const now = new Date();
+    document.getElementById('checkDate').textContent = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU');
+
+    // 3. Заполняем карточку: Статус проверки (Счетчики)
+    document.getElementById('criticalCount').textContent = data.critical_errors || 0;
+    document.getElementById('warningCount').textContent = data.warnings || 0;
+    document.getElementById('passedCount').textContent = data.passed_count || 0;
+
+    // 4. Итог в процентах
+    const compliancePercent = data.compliance_percent || 0;
+    const failPercent = 100 - compliancePercent; // Вычисляем "Остальное"
+
+    document.getElementById('successPercent').textContent = compliancePercent + '%';
+    document.getElementById('failPercent').textContent = failPercent + '%';
+
+    // 5. Отрисовываем параметры проверки (список ошибок)
     const container = document.getElementById('checkColumns');
-
     if (data.errors_list && data.errors_list.length > 0) {
-        // Динамически выводим список ошибок, если они есть
         container.innerHTML = data.errors_list.map(err => `
-            <div class="check-row" style="border-left: 4px solid ${err.severity === 'CRITICAL' ? 'var(--color-error)' : 'var(--color-warning)'}; display: block; margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 15px;">[${err.category}] — Локация: ${err.location}</div>
-                <div style="margin-top: 4px; color: var(--color-text);">${err.message}</div>
-                <div style="margin-top: 6px; font-size: 13px; color: var(--color-error); font-weight: 500;">Возможный риск штрафа ГИТ: ${err.fine_equivalent}</div>
-                <div style="margin-top: 4px; font-size: 13px; color: var(--color-success);">💡 Совет: ${err.legal_tip}</div>
+            <div style="background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid ${err.severity === 'CRITICAL' ? '#EF4444' : '#F59E0B'}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 600; color: #1E2937; margin-bottom: 8px;">[${err.category}] Локация: ${err.location}</div>
+                <div style="color: #475569; font-size: 14.5px; margin-bottom: 8px;">${err.message}</div>
+                <div style="color: #EF4444; font-size: 13.5px; font-weight: 500; margin-bottom: 4px;">Риск: ${err.fine_equivalent}</div>
+                <div style="color: #10B981; font-size: 13.5px;">💡 Совет эксперта: ${err.legal_tip}</div>
             </div>
         `).join('');
     } else {
-        // Если нарушений не найдено
         container.innerHTML = `
-            <div class="check-row" style="border-left: 4px solid var(--color-success);">
-                <div>Проверка структуры ЛНА по ГОСТ Р 7.0.97 / Приказ 772н</div>
-                <div style="font-weight:600; color:var(--color-success)">Соответствует нормам (100%)</div>
+            <div style="background: #fff; padding: 16px; border-radius: 12px; border-left: 4px solid #10B981; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 600; color: #10B981;">Нарушений ГОСТ не обнаружено. Документ полностью соответствует требованиям.</div>
             </div>
         `;
     }
 });
 
-// Кнопка скачивания Excel-отчета
-document.getElementById('downloadBtn').addEventListener('click', async () => {
-    const docType = sessionStorage.getItem('selected_doc_type') || 'instruction';
-    // Направляем скачивание на правильный порт бэкенда
-    window.location.href = `${API_URL}/api/v1/verify/export/${docType}`;
+// Кнопки управления
+document.getElementById('newCheckBtn').addEventListener('click', () => {
+    window.location.href = 'upload.html';
 });
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    const docType = sessionStorage.getItem('selected_doc_type') || 'instruction';
+    window.location.href = `https://precook-earwig-anyway.ngrok-free.dev/api/v1/verify/export/${docType}`;

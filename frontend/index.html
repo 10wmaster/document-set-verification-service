@@ -3,34 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в систему</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .auth-card {
-            background: #fff;
-            padding: 40px;
-            border-radius: 16px;
-            max-width: 400px;
-            margin: 100px auto;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-    </style>
+    <title>ОхранаТрудКонтроль</title>
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <div class="auth-card">
-        <h2>Авторизация в системе</h2>
-        <p style="color: var(--color-text-secondary); margin-top: 8px;">Для старта проверок ЛНА войдите через Telegram</p>
-
-        <div id="telegram-widget-container" style="margin-top: 24px;">
-            <script async src="https://telegram.org/js/telegram-widget.js?22"
-                    data-telegram-login="ot_docs_checker_bot"
-                    data-size="large"
-                    data-onauth="onTelegramAuth(user)"
-                    data-request-access="write">
-            </script>
+    <main class="main" style="display: flex; max-width: 1280px; width: 90%; max-height: 740px; height: auto; background: #FFFFFF; border-radius: 8px; box-shadow: 0px 12px 45px 0px #FFFFFF0F;">
+        <div class="main_left" style="width: 720px; padding: 52px; height: 740px; box-sizing: border-box; background: linear-gradient(154.1deg, #1E3A7A -8.2%, #2A5EC8 44.67%, #2A5FC8 65.24%, #3B8EE0 97.55%); border-radius: 8px 0 0 8px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="main_left-head" style="display: flex; align-items: center; gap: 12px;">
+                <img src="логотип.png" alt="логотип" style="width: 57px; height: 56px;">
+                <div style="display: flex; flex-direction: column;">
+                    <h2 style="font-family: 'Unbounded', sans-serif; font-weight: 800; font-size: 15px; margin: 0; color: #FFFFFF;">ОхранаТрудКонтроль</h2>
+                    <p style="font-family: 'Unbounded', sans-serif; font-weight: 800; font-size: 12px; margin: 0; color: #FFFFFF">Нормоконтроль документов</p>
+                </div>
+            </div>
+            <div class="main_left-body" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <h1 style="font-family: 'Unbounded', sans-serif; font-weight: 800; font-size: 26px; color: #FFFFFF; margin: 0 0 16px 0;">Автоматический нормоконтроль<br>инструкций и журналов</h1>
+                <p style="font-family: 'Golos Text', sans-serif; font-weight: 500; font-size: 16px; line-height: 141%; color: #D3E0F4; margin: 0;">Проверяйте документы по охране труда на соответствие актуальным<br>приказам Минтруда РФ и ГОСТам. Сервис анализирует структуру,<br>шрифты, разделы и реквизиты.</p>
+            </div>
+            <div class="main_left-footer">
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; color: #D3E0F4; font-family: 'Golos Text', sans-serif; font-weight: 500; font-size: 15px;"><img src="iconCarrier.png" alt="иконка галочки" style="width: 13px; height: 14px;">Проверка по актуальным нормативным базам Минтруда РФ</li>
+                    <li style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; color: #D3E0F4; font-family: 'Golos Text', sans-serif; font-weight: 500; font-size: 15px;"><img src="iconCarrier.png" alt="иконка галочки" style="width: 13px; height: 14px;">Детальный отчёт с указанием конкретных нарушений</li>
+                    <li style="display: flex; align-items: center; gap: 12px; color: #D3E0F4; font-family: 'Golos Text', sans-serif; font-weight: 500; font-size: 15px;"><img src="iconCarrier.png" alt="иконка галочки" style="width: 13px; height: 14px;">Поддержка форматов DOCX и PDF, до 20 МБ</li>
+                </ul>
+            </div>
         </div>
-    </div>
+
+        <div class="main_right" style="width: 560px; padding: 44px 52px; height: 740px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <h2 style="font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 20px; color: #1A2540; margin: 0 0 12px 0; text-align: center;">Добро пожаловать</h2>
+            <p style="font-family: 'Golos Text', sans-serif; font-weight: 400; font-size: 15px; line-height: 141%; text-align: center; color: #5A6A8A; margin: 0 0 32px 0; width: 450px;">Войдите через Telegram, чтобы начать работу с системой<br>нормоконтроля документов по охране труда</p>
+            <div class="authorization" style="display: flex; flex-direction: row; align-items: center; gap: 12px; margin-bottom: 32px; width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="134" height="1" viewBox="0 0 134 1" fill="none" style="flex: 1;"><line y1="0.5" x2="134" y2="0.5" stroke="#8792AA"/></svg>
+                <p style="font-family: 'Golos Text', sans-serif; font-weight: 400; font-size: 13px; color: #8792AA; margin: 0; white-space: nowrap;">Авторизация</p>
+                <svg xmlns="http://www.w3.org/2000/svg" width="134" height="1" viewBox="0 0 134 1" fill="none" style="flex: 1;"><line y1="0.5" x2="134" y2="0.5" stroke="#8792AA"/></svg>
+            </div>
+
+            <!-- Официальный виджет Telegram -->
+            <div id="telegram-widget-container" style="display: flex; justify-content: center; width: 100%;">
+                <script async src="https://telegram.org/js/telegram-widget.js?22"
+                        data-telegram-login="ot_docs_checker_bot"
+                        data-size="large"
+                        data-onauth="onTelegramAuth(user)"
+                        data-request-access="write">
+                </script>
+            </div>
+        </div>
+    </main>
 
     <script>
         async function onTelegramAuth(user) {
@@ -50,13 +68,8 @@
                     alert('Ошибка авторизации. Проверьте подлинность данных бота.');
                 }
             } catch (error) {
-                alert('Ошибка соединения с бэкенд-сервером (порт 9001).');
+                alert('Ошибка соединения с бэкенд-сервером.');
             }
-        }
-
-        // Автопереход срабатывает только при наличии сохраненного токена
-        if (sessionStorage.getItem('auth_token')) {
-            window.location.href = 'upload.html';
         }
     </script>
 </body>

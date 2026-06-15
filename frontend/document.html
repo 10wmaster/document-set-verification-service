@@ -2,41 +2,96 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Академический сервис — Просмотр результатов</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Академический сервис — Просмотр документа</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="document.css">
 </head>
 <body>
     <div class="container">
-        <a href="upload.html" style="color: var(--color-primary); text-decoration: none;">← Назад к загрузке</a>
+        <a href="upload.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Вернуться к загрузке
+        </a>
 
         <div class="top-info-row">
+            <!-- Карточка 1: Метаданные -->
             <section class="document-section">
-                <h2 style="margin-bottom:16px;">Результаты экспресс-аудита ЛНА</h2>
+                <h2 class="document-section__title">Метаданные проверки</h2>
+                <div class="metadata-list">
+                    <div class="metadata-item">
+                        <span class="metadata-item__label">Название документа</span>
+                        <span class="metadata-item__value" id="docName">—</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-item__label">Тип документа</span>
+                        <span class="metadata-item__value" id="docType">—</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-item__label">Дата загрузки</span>
+                        <span class="metadata-item__value" id="checkDate">—</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Карточка 2: Статус -->
+            <section class="document-section">
+                <h2 class="document-section__title">Статус проверки</h2>
                 <div class="status-summary">
                     <div class="status-summary__item">
                         <span class="status-summary__count status-summary__count--error" id="criticalCount">0</span>
-                        <span style="font-size:13px; color:var(--color-text-secondary);">Ошибок</span>
+                        <span class="status-summary__label">Критических</span>
+                    </div>
+                    <div class="status-summary__item">
+                        <span class="status-summary__count status-summary__count--warning" id="warningCount">0</span>
+                        <span class="status-summary__label">Замечаний</span>
                     </div>
                     <div class="status-summary__item">
                         <span class="status-summary__count status-summary__count--success" id="passedCount">0</span>
-                        <span style="font-size:13px; color:var(--color-text-secondary);">Успешно</span>
+                        <span class="status-summary__label">Проверено</span>
                     </div>
-                    <div class="status-summary__item">
-                        <span class="status-summary__count" style="color:var(--color-primary);" id="percentCount">0%</span>
-                        <span style="font-size:13px; color:var(--color-text-secondary);">Соответствие</span>
+                </div>
+            </section>
+
+            <!-- Карточка 3: НОВЫЙ БЛОК с процентами -->
+            <section class="document-section">
+                <h2 class="document-section__title">Итог в процентах</h2>
+                <div class="metadata-list">
+                    <div class="metadata-item">
+                        <span class="metadata-item__label">Всего процентов</span>
+                        <span class="metadata-item__value">100%</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-item__label" style="color: #10B981; font-weight: 600;">Успех</span>
+                        <span class="metadata-item__value" id="successPercent" style="color: #10B981; font-weight: 700; font-size: 16px;">0%</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-item__label" style="color: #EF4444; font-weight: 600;">Ошибки</span>
+                        <span class="metadata-item__value" id="failPercent" style="color: #EF4444; font-weight: 700; font-size: 16px;">0%</span>
                     </div>
                 </div>
             </section>
         </div>
 
-        <h2 style="margin-bottom:16px;">Параметры проверки разметки и реквизитов</h2>
-        <div id="checkColumns"></div>
+        <section class="check-section">
+            <h2 class="check-section__title">Параметры проверки</h2>
+            <div class="check-columns" id="checkColumns">
+                <!-- Ошибки будут выведены скриптом -->
+            </div>
+        </section>
 
-        <div style="margin-top:24px; display:flex; gap:16px;">
-            <button class="btn btn--primary" id="downloadBtn">Скачать отчет XLSX</button>
+        <div class="page-actions">
+            <button type="button" class="btn btn--secondary" id="newCheckBtn">Загрузить новый документ</button>
+            <button type="button" class="btn btn--primary" id="downloadBtn">Скачать отчет XLSX</button>
         </div>
     </div>
+
     <script src="document.js"></script>
 </body>
 </html>
